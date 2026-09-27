@@ -29,7 +29,6 @@ import yaml
 
 FEEDS_PATH = Path(__file__).parent / "feeds.yaml"
 LOOKBACK_HOURS = 26  # 毎日cronの間隔(24h)より少し長めに取り、取りこぼしを防ぐ
-MAX_SELECTED_ARTICLES = 15
 MODEL = "claude-sonnet-5"
 
 
@@ -89,10 +88,24 @@ def select_and_summarize(entries: list[dict], api_key: str) -> list[dict]:
     )
 
     prompt = (
-        "以下は過去24時間にAI・メディア業界関連のRSSフィードから収集した記事一覧です。\n"
-        f"この中からAI業界・メディア業界にとって特に重要・注目すべき記事を最大{MAX_SELECTED_ARTICLES}件選び、"
-        "それぞれ日本語で1〜2文の簡潔な要約を書いてください。\n"
-        "重複した内容や広告的な記事は除外してください。重要な記事が少なければ件数を無理に増やさなくて構いません。\n\n"
+        "あなたはAI・メディア業界の実務家向けニュースダイジェストを作成する編集者です。\n"
+        "以下は過去24時間に収集した記事一覧です。この中から、その日読むべき重要なニュースを選び、"
+        "日本語で1〜2文の要約を書いてください。\n\n"
+        "## 選定の優先順位\n"
+        "1. 全体として「メディア関連ニュース」を「AI関連ニュース」より優先してください(メディア > AI)。\n"
+        "2. メディア関連の中でも特に重視するテーマ: 新聞、Webメディア、ニュースアプリ、"
+        "サブスクリプション、メディア×AI(生成AIとメディア業界の交差領域)、"
+        "メディア企業の経営(買収・資金調達・業績・組織再編など)。\n"
+        "3. 上記以外のメディア関連ニュース(例: 一般的な広告・マーケティング動向など)は、"
+        "完全に除外はせず、重要度をわずかに下げる程度で扱ってください。\n"
+        "4. 地域は日本のニュースを中心にしつつ、米国・中国の主要ニュースも積極的に取り上げてください。"
+        "欧州については、日本への影響が大きい、または参考になる大きなニュースに絞ってください。\n\n"
+        "## その他のルール\n"
+        "- 同じ出来事について「報道記事」と「公式発表(プレスリリース等)」の両方が一覧にある場合は、"
+        "1つのトピックとしてまとめ、両方の番号を indices に含めてください。\n"
+        "- 件数の目安は1日5〜10本ですが、重要なニュースが多い日は10本を超えても構いません。"
+        "逆に重要な記事が少なければ無理に5本に増やさなくて構いません。\n"
+        "- 重複した内容や広告的な記事は除外してください。\n\n"
         f"{listing}"
     )
 
@@ -111,10 +124,15 @@ def select_and_summarize(entries: list[dict], api_key: str) -> list[dict]:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "index": {"type": "integer"},
+                                    "indices": {
+                                        "type": "array",
+                                        "items": {"type": "integer"},
+                                        "minItems": 1,
+                                        "maxItems": 3,
+                                    },
                                     "summary_ja": {"type": "string"},
                                 },
-                                "required": ["index", "summary_ja"],
+                                "required": ["indices", "summary_ja"],
                                 "additionalProperties": False,
                             },
                         }
@@ -131,10 +149,18 @@ def select_and_summarize(entries: list[dict], api_key: str) -> list[dict]:
 
     results = []
     for item in data.get("selected", []):
-        idx = item.get("index")
-        if idx is None or not (0 <= idx < len(entries)):
+        indices = [i for i in item.get("indices", []) if 0 <= i < len(entries)]
+        if not indices:
             continue
-        results.append({**entries[idx], "summary_ja": item.get("summary_ja", "")})
+        grouped = [entries[i] for i in indices]
+        results.append(
+            {
+                "title": grouped[0]["title"],
+                "category": grouped[0]["category"],
+                "summary_ja": item.get("summary_ja", ""),
+                "links": [{"source": g["source"], "url": g["link"]} for g in grouped],
+            }
+        )
     return results
 
 
@@ -148,15 +174,19 @@ def build_email_html(articles: list[dict], today: str) -> str:
 
         sections = []
         for category, items in by_category.items():
-            rows = "\n".join(
-                f"<li style='margin-bottom:12px;'>"
-                f"<a href='{a['link']}' style='font-weight:bold;'>{a['title']}</a>"
-                f"<div style='color:#555;font-size:14px;'>{a['summary_ja']}</div>"
-                f"<div style='color:#999;font-size:12px;'>{a['source']}</div>"
-                f"</li>"
-                for a in items
-            )
-            sections.append(f"<h3>{category}</h3><ul>{rows}</ul>")
+            rows = []
+            for a in items:
+                link_list = " / ".join(
+                    f"<a href='{link['url']}'>{link['source']}</a>" for link in a["links"]
+                )
+                rows.append(
+                    f"<li style='margin-bottom:12px;'>"
+                    f"<div style='font-weight:bold;'>{a['title']}</div>"
+                    f"<div style='color:#555;font-size:14px;'>{a['summary_ja']}</div>"
+                    f"<div style='color:#999;font-size:12px;'>{link_list}</div>"
+                    f"</li>"
+                )
+            sections.append(f"<h3>{category}</h3><ul>{''.join(rows)}</ul>")
         body = "\n".join(sections)
 
     return f"""

@@ -2,21 +2,54 @@
 #
 # 各エントリの意味:
 #   name:     メールに表示される情報源名
-#   category: メールでのグルーピング用ラベル
+#   category: メールでのグルーピング・優先度判断のヒント用ラベル
 #   url:      RSS/AtomフィードのURL
 #
 # 注意:
 #   このファイルのURLはウェブ検索で確認した情報をもとに設定していますが、
-#   実行環境のネットワーク制限により、このリポジトリの開発中に実際に
-#   フィードを取得して動作確認することはできませんでした。
-#   GitHub Actions上で初回実行(手動実行推奨)した際に、取得できなかった
-#   フィードがあればログに [WARN] として出力されるので、その情報源だけ
-#   URLを差し替えてください。
+#   この開発セッション自体のネットワークポリシーでニュースサイトへの直接アクセスが
+#   ブロックされていた(egressプロキシから403 Forbidden)ため、開発中に実際の
+#   フィード取得確認はできていません。GitHub Actions実行環境は別ネットワークです。
+#   初回は workflow_dispatch で手動実行し、ログの [WARN] を見て
+#   取得できなかったフィードのURLを見直してください。
 #
-# フィードを追加・削除したいときは、このリストに行を足す/消すだけでOKです。
+# 優先度の基本方針(digest.py側のプロンプトで指定):
+#   メディア関連 > AI関連。メディアの中でも
+#   新聞・Webメディア・ニュースアプリ・サブスク・メディア×AI・メディア企業の経営 を最重視。
+#   地域は日本中心+米国・中国の主要ニュース+欧州は日本への影響が大きいものだけ。
 
 feeds:
-  # --- 海外AI系メディア ---
+  # --- 国内メディア(新聞・Webメディア・業界動向) ---
+  - name: "Media Innovation"
+    category: "国内メディア"
+    url: "https://media-innovation.jp/feed/"
+
+  - name: "DIGIDAY Japan"
+    category: "国内メディア"
+    url: "https://digiday.jp/feed/"
+
+  - name: "国内メディア業界ニュース(Google News検索: 新聞/放送/出版)"
+    category: "国内メディア"
+    url: "https://news.google.com/rss/search?q=%E6%94%BE%E9%80%81%E6%A5%AD%E7%95%8C%20OR%20%E6%96%B0%E8%81%9E%E6%A5%AD%E7%95%8C%20OR%20%E5%87%BA%E7%89%88%E6%A5%AD%E7%95%8C&hl=ja&gl=JP&ceid=JP:ja"
+
+  - name: "国内メディア企業の経営ニュース(Google News検索)"
+    category: "国内メディア(経営)"
+    url: "https://news.google.com/rss/search?q=%E6%96%B0%E8%81%9E%E7%A4%BE%20OR%20%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9%E3%82%A2%E3%83%97%E3%83%AA%20OR%20%E6%9C%89%E6%96%99%E4%BC%9A%E5%93%A1%20OR%20%E3%82%B5%E3%83%96%E3%82%B9%E3%82%AF%20%28%E7%B5%8C%E5%96%B6%20OR%20%E8%B2%B7%E5%8F%8E%20OR%20%E8%B3%87%E9%87%91%E8%AA%BF%E9%81%94%20OR%20%E6%A5%AD%E7%B8%BE%29&hl=ja&gl=JP&ceid=JP:ja"
+    # 新聞・ニュースアプリ・サブスクの「経営」に関するニュースをGoogle News検索で拾う。
+    # メディア×AI(生成AIとメディアの交差領域)の記事も、この検索やAI系フィードから
+    # 混ざって拾われる想定。
+
+  # --- 海外メディア(主に米国、経営・買収・サブスク動向) ---
+  - name: "海外メディア業界ニュース(Google News検索、英語)"
+    category: "海外メディア"
+    url: "https://news.google.com/rss/search?q=%28news%20media%20OR%20journalism%20OR%20newspaper%29%20%28acquisition%20OR%20subscription%20OR%20funding%20OR%20earnings%20OR%20layoffs%29&hl=en-US&gl=US&ceid=US:en"
+
+  # --- 中国のAI・メディア動向(主要ニュースのみ拾えるよう検索ベース) ---
+  - name: "中国AI・メディアニュース(Google News検索、英語)"
+    category: "中国AI・メディア"
+    url: "https://news.google.com/rss/search?q=China%20%28AI%20OR%20%22artificial%20intelligence%22%20OR%20media%20OR%20journalism%20OR%20news%20app%29&hl=en-US&gl=US&ceid=US:en"
+
+  # --- 海外AI系メディア(主に米国) ---
   - name: "TechCrunch AI"
     category: "海外AI"
     url: "https://techcrunch.com/category/artificial-intelligence/feed/"
@@ -38,19 +71,3 @@ feeds:
     # 他のアカウントを追加したい場合は
     #   https://note.com/<ユーザー名>/rss
     # の形式で行を追加してください。
-
-  # --- メディア業界ニュース ---
-  - name: "Media Innovation"
-    category: "メディア業界"
-    url: "https://media-innovation.jp/feed/"
-
-  - name: "DIGIDAY Japan"
-    category: "メディア業界"
-    url: "https://digiday.jp/feed/"
-
-  - name: "メディア業界ニュース(Google News検索: 新聞/放送/出版)"
-    category: "メディア業界"
-    url: "https://news.google.com/rss/search?q=%E6%94%BE%E9%80%81%E6%A5%AD%E7%95%8C%20OR%20%E6%96%B0%E8%81%9E%E6%A5%AD%E7%95%8C%20OR%20%E5%87%BA%E7%89%88%E6%A5%AD%E7%95%8C&hl=ja&gl=JP&ceid=JP:ja"
-    # 新聞・放送・出版業界に特化した単一の公式RSSが見つからなかったため、
-    # Google Newsのキーワード検索フィードで代替しています。
-    # ノイズが多いと感じたら検索キーワード(q=の中身)を調整してください。
