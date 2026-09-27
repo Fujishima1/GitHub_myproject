@@ -1,0 +1,30 @@
+name: Daily AI/Media News Digest
+
+on:
+  schedule:
+    # 毎日 23:00 UTC = 08:00 JST (翌日) に実行
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+    # 手動実行用。初回セットアップ後の動作確認にはこちらを使ってください。
+    # (Actionsタブ > Daily AI/Media News Digest > Run workflow)
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r news_digest/requirements.txt
+
+      - name: Run digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DIGEST_RECIPIENT: ${{ secrets.DIGEST_RECIPIENT }}
+        run: python news_digest/digest.py
