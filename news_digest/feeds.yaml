@@ -1,0 +1,56 @@
+# AI・メディア関連ニュースの収集元一覧
+#
+# 各エントリの意味:
+#   name:     メールに表示される情報源名
+#   category: メールでのグルーピング用ラベル
+#   url:      RSS/AtomフィードのURL
+#
+# 注意:
+#   このファイルのURLはウェブ検索で確認した情報をもとに設定していますが、
+#   実行環境のネットワーク制限により、このリポジトリの開発中に実際に
+#   フィードを取得して動作確認することはできませんでした。
+#   GitHub Actions上で初回実行(手動実行推奨)した際に、取得できなかった
+#   フィードがあればログに [WARN] として出力されるので、その情報源だけ
+#   URLを差し替えてください。
+#
+# フィードを追加・削除したいときは、このリストに行を足す/消すだけでOKです。
+
+feeds:
+  # --- 海外AI系メディア ---
+  - name: "TechCrunch AI"
+    category: "海外AI"
+    url: "https://techcrunch.com/category/artificial-intelligence/feed/"
+
+  - name: "MIT Technology Review"
+    category: "海外AI"
+    url: "https://www.technologyreview.com/feed/"
+
+  # --- 国内AI系メディア ---
+  - name: "ITmedia AI+"
+    category: "国内AI"
+    url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml"
+
+  - name: "note.com (npaka)"
+    category: "国内AI"
+    url: "https://note.com/npaka/rss"
+    # note.comの「AI系ブログ」は個人アカウント単位のフィードしかないため、
+    # まずは代表的な発信者(npaka氏)を1件セットしています。
+    # 他のアカウントを追加したい場合は
+    #   https://note.com/<ユーザー名>/rss
+    # の形式で行を追加してください。
+
+  # --- メディア業界ニュース ---
+  - name: "Media Innovation"
+    category: "メディア業界"
+    url: "https://media-innovation.jp/feed/"
+
+  - name: "DIGIDAY Japan"
+    category: "メディア業界"
+    url: "https://digiday.jp/feed/"
+
+  - name: "メディア業界ニュース(Google News検索: 新聞/放送/出版)"
+    category: "メディア業界"
+    url: "https://news.google.com/rss/search?q=%E6%94%BE%E9%80%81%E6%A5%AD%E7%95%8C%20OR%20%E6%96%B0%E8%81%9E%E6%A5%AD%E7%95%8C%20OR%20%E5%87%BA%E7%89%88%E6%A5%AD%E7%95%8C&hl=ja&gl=JP&ceid=JP:ja"
+    # 新聞・放送・出版業界に特化した単一の公式RSSが見つからなかったため、
+    # Google Newsのキーワード検索フィードで代替しています。
+    # ノイズが多いと感じたら検索キーワード(q=の中身)を調整してください。
